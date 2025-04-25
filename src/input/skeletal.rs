@@ -171,7 +171,6 @@ impl<C: openxr_data::Compositor> Input<C> {
 
     pub(super) fn get_bone_summary_from_hand_tracking(
         &self,
-        xr_data: &OpenXrData<C>,
         session_data: &SessionData,
         summary_type: vr::EVRSummaryType,
         summary_data: *mut vr::VRSkeletalSummaryData_t,
@@ -180,11 +179,17 @@ impl<C: openxr_data::Compositor> Input<C> {
     ) {
         let legacy = session_data.input_data.legacy_actions.get().unwrap();
         let display_time = self.openxr.display_time.get();
+        let devices = session_data.input_data.devices.read().unwrap();
+
+        let Some(controller) = devices.get_controller(hand) else {
+            self.get_estimated_bone_summary(session_data, summary_type, summary_data, hand);
+            return;
+        };
         let Some(raw) = match hand {
             Hand::Left => &legacy.left_spaces,
             Hand::Right => &legacy.right_spaces,
         }
-        .try_get_or_init_raw(xr_data, session_data, &legacy.actions) else {
+        .try_get_or_init_raw(&controller.get_interaction_profile(), session_data, &legacy.actions) else {
             self.get_estimated_bone_summary(session_data, summary_type, summary_data, hand);
             return;
         };
@@ -256,6 +261,15 @@ impl<C: openxr_data::Compositor> Input<C> {
             };
 
             *curl_value = curl;
+
+            let legacy_hand_state = self.get_finger_state(session_data, hand);
+
+            // HACK: use estimated thumb on index to fix gestures
+            if i == 0 && controller.get_interaction_profile().unwrap().profile_path() == "/interaction_profiles/valve/index_controller" {
+                *curl_value = legacy_hand_state.thumb;
+            } else {
+                *curl_value = curl;
+            }
         }
 
         unsafe {
