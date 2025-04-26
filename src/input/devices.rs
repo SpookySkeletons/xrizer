@@ -277,8 +277,13 @@ impl XrTrackedDevice {
                 xr_data.display_time.get(),
             )
             .ok()?;
+        let mut pose = vr::space_relation_to_openvr_pose(location, velocity);
+        
+        //HACK: Trackers will freeze in VRChat like this, which is more desirable when the pose is invalid.
+        pose.bDeviceIsConnected = true;
+        pose.bPoseIsValid = true;
 
-        Some(vr::space_relation_to_openvr_pose(location, velocity))
+        Some(pose)
     }
 }
 
