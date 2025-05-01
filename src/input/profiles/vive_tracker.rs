@@ -12,10 +12,15 @@ pub struct ViveTracker;
 impl InteractionProfile for ViveTracker {
     fn properties(&self) -> &'static ProfileProperties {
         &ProfileProperties {
-            model: c"Vive Tracker Handheld Object",
+            model: Property::BothHands(c"Vive Tracker Handheld Object"),
             openvr_controller_type: c"vive_tracker_handheld_object",
             render_model_name: Property::BothHands(c"vive_tracker"),
             main_axis: MainAxisType::Thumbstick,
+            registered_device_type: Property::BothHands(c"vive_tracker"),
+            serial_number: Property::BothHands(c"vive_tracker"), // This gets replaced
+            tracking_system_name: c"lighthouse",
+            manufacturer_name: c"HTC",
+            legacy_buttons_mask: 0u64, // This is the closest thing I could think of to NOOP this
         }
     }
     fn profile_path(&self) -> &'static str {

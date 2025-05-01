@@ -2,20 +2,35 @@ use super::{
     InteractionProfile, MainAxisType, PathTranslation, ProfileProperties, Property,
     SkeletalInputBindings, StringToPath,
 };
+use crate::button_mask_from_ids;
+use crate::input::legacy::button_mask_from_id;
 use crate::input::legacy::LegacyBindings;
 use crate::openxr_data::Hand;
 use glam::Mat4;
+use openvr::EVRButtonId::{ApplicationMenu, Axis0, Axis1, Grip, System};
 
 pub struct ViveWands;
 
 impl InteractionProfile for ViveWands {
     fn properties(&self) -> &'static ProfileProperties {
-        &ProfileProperties {
-            model: c"Vive. Controller MV",
+        static DEVICE_PROPERTIES: ProfileProperties = ProfileProperties {
+            model: Property::BothHands(c"Vive. MV"),
             openvr_controller_type: c"vive_controller",
             render_model_name: Property::BothHands(c"vr_controller_vive_1_5"),
             main_axis: MainAxisType::Trackpad,
-        }
+            registered_device_type: Property::PerHand {
+                left: c"htc/vive_controllerLHR-00000001",
+                right: c"htc/vive_controllerLHR-00000002",
+            },
+            serial_number: Property::PerHand {
+                left: c"LHR-00000001",
+                right: c"LHR-00000002",
+            },
+            tracking_system_name: c"lighthouse",
+            manufacturer_name: c"HTC",
+            legacy_buttons_mask: button_mask_from_ids!(System, ApplicationMenu, Grip, Axis0, Axis1),
+        };
+        &DEVICE_PROPERTIES
     }
     fn profile_path(&self) -> &'static str {
         "/interaction_profiles/htc/vive_controller"
