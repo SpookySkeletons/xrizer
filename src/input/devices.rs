@@ -134,9 +134,6 @@ impl XrTrackedDevice {
                 let profile = self.interaction_profile.lock().ok()?;
                 let data = profile.as_ref()?.properties();
 
-                let serial = self.xdev.as_ref()?.properties.serial();
-                let c = unsafe { CStr::from_ptr(serial.as_bytes().as_ptr() as *const i8) };
-
                 match prop {
                     // Audica likes to apply controller specific tweaks via this property
                     vr::ETrackedDeviceProperty::ControllerType_String => {
@@ -150,7 +147,7 @@ impl XrTrackedDevice {
                         Some(*data.render_model_name.get(Hand::Left))
                     }
                     // Required for controllers to be acknowledged in I Expect You To Die 3
-                    vr::ETrackedDeviceProperty::SerialNumber_String => Some(c),
+                    vr::ETrackedDeviceProperty::SerialNumber_String => Some(unsafe { CStr::from_ptr(self.xdev.as_ref()?.properties.serial.as_ptr()) }),
                     vr::ETrackedDeviceProperty::ManufacturerName_String => Some(c"<unknown>"),
                     _ => None,
                 }
