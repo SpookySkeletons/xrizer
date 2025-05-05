@@ -298,7 +298,7 @@ impl XrTrackedDevice {
 
         //HACK: Trackers will freeze in VRChat like this, which is more desirable when the pose is invalid.
         pose.bDeviceIsConnected = true;
-        pose.bPoseIsValid = true;
+        pose.bPoseIsValid = location.location_flags.contains(xr::SpaceLocationFlags::POSITION_VALID);
 
         Some(pose)
     }
