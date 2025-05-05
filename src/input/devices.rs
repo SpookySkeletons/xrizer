@@ -163,9 +163,9 @@ impl XrTrackedDevice {
                         Some(data.tracking_system_name)
                     }
                     // Required for controllers to be acknowledged in I Expect You To Die 3
-                    vr::ETrackedDeviceProperty::SerialNumber_String => Some(unsafe {
-                        CStr::from_ptr(self.xdev.as_ref()?.properties.serial.as_ptr())
-                    }),
+                    vr::ETrackedDeviceProperty::SerialNumber_String => {
+                        Some(self.xdev.as_ref()?.serial)
+                    }
                     vr::ETrackedDeviceProperty::ManufacturerName_String => {
                         Some(data.manufacturer_name)
                     }
