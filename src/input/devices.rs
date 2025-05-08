@@ -164,7 +164,11 @@ impl XrTrackedDevice {
                     }
                     // Required for controllers to be acknowledged in I Expect You To Die 3
                     vr::ETrackedDeviceProperty::SerialNumber_String => {
-                        Some(self.xdev.as_ref()?.serial)
+                        let serial = self.xdev.as_ref()?.get_or_init_serial();
+
+                        log::info!("Serial: {:?}", serial.to_str().ok()?);
+
+                        Some(serial)
                     }
                     vr::ETrackedDeviceProperty::ManufacturerName_String => {
                         Some(data.manufacturer_name)
