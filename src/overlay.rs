@@ -1456,14 +1456,3 @@ impl vr::IVROverlay007On013 for OverlayMan {
         todo!()
     }
 }
-
-impl vr::IVROverlay014On016 for OverlayMan {
-    fn CreateOverlay(
-        &self,
-        _: *const c_char,
-        _: *const c_char,
-        _: *mut vr::VROverlayHandle_t,
-    ) -> vr::EVROverlayError {
-        todo!()
-    }
-}
