@@ -14,7 +14,7 @@ use devices::TrackedDeviceCreateInfo;
 use devices::TrackedDeviceList;
 use devices::TrackedDeviceType;
 use devices::XrTrackedDevice;
-pub use profiles::{InteractionProfile, Profiles};
+pub use profiles::{InteractionProfile, MainAxisType, Profiles};
 use skeletal::FingerState;
 use skeletal::SkeletalInputActionData;
 
@@ -1357,75 +1357,13 @@ impl<C: openxr_data::Compositor> Input<C> {
     }
 
     fn get_profile_data(&self, hand: Hand) -> Option<&profiles::ProfileProperties> {
-        let path = self
-            .devices
-            .read()
-            .ok()?
-            .get_device(hand.into())?
-            .get_profile_path();
+        let session = self.openxr.session_data.get();
+        let devices = session.input_data.devices.read().ok()?;
+        let controller = devices.get_controller(hand)?;
 
-        self.profile_map.get(&path).map(|v| &**v)
-    }
-
-    pub fn get_controller_string_tracked_property(
-        &self,
-        hand: Hand,
-        property: vr::ETrackedDeviceProperty,
-    ) -> Option<&'static CStr> {
-        self.get_profile_data(hand).and_then(|data| {
-            match property {
-                // Audica likes to apply controller specific tweaks via this property
-                vr::ETrackedDeviceProperty::ControllerType_String => {
-                    Some(data.openvr_controller_type)
-                }
-                // I Expect You To Die 3 identifies controllers with this property -
-                // why it couldn't just use ControllerType instead is beyond me...
-                // Because some controllers have different model names for each hand......
-                vr::ETrackedDeviceProperty::ModelNumber_String => Some(*data.model.get(hand)),
-                // Resonite won't recognize controllers without this
-                vr::ETrackedDeviceProperty::RenderModelName_String => {
-                    Some(*data.render_model_name.get(hand))
-                }
-                vr::ETrackedDeviceProperty::RegisteredDeviceType_String => {
-                    Some(*data.registered_device_type.get(hand))
-                }
-                vr::ETrackedDeviceProperty::TrackingSystemName_String => {
-                    Some(data.tracking_system_name)
-                }
-                // Required for controllers to be acknowledged in I Expect You To Die 3
-                vr::ETrackedDeviceProperty::SerialNumber_String => {
-                    Some(*data.serial_number.get(hand))
-                }
-                vr::ETrackedDeviceProperty::ManufacturerName_String => Some(data.manufacturer_name),
-                _ => None,
-            }
-        })
-    }
-
-    pub fn get_controller_int_tracked_property(
-        &self,
-        hand: Hand,
-        property: vr::ETrackedDeviceProperty,
-    ) -> Option<i32> {
-        self.get_profile_data(hand).and_then(|data| match property {
-            vr::ETrackedDeviceProperty::Axis0Type_Int32 => match data.main_axis {
-                MainAxisType::Thumbstick => Some(vr::EVRControllerAxisType::Joystick as _),
-                MainAxisType::Trackpad => Some(vr::EVRControllerAxisType::TrackPad as _),
-            },
-            vr::ETrackedDeviceProperty::Axis1Type_Int32 => {
-                Some(vr::EVRControllerAxisType::Trigger as _)
-            }
-            vr::ETrackedDeviceProperty::Axis2Type_Int32 => {
-                // This is actually the grip, and gets recognized as such
-                Some(vr::EVRControllerAxisType::Trigger as _)
-            }
-            // TODO: report knuckles trackpad?
-            vr::ETrackedDeviceProperty::Axis3Type_Int32
-            | vr::ETrackedDeviceProperty::Axis4Type_Int32 => {
-                Some(vr::EVRControllerAxisType::None as _)
-            }
-            _ => None,
-        })
+        self.profile_map
+            .get(&controller.get_profile_path())
+            .map(|v| &**v)
     }
 
     pub fn get_controller_uint_tracked_property(
